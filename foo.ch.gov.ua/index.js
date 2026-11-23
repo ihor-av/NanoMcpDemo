@@ -57,13 +57,26 @@ export function handleFooRequest(request) {
   }
 
   if (request.method !== "GET") {
-    return new Response("Цей сайт приймає лише GET-запити.\n", {
-      status: 405,
-      headers: { allow: "GET" },
-    });
+    return new Response(
+      renderTemplate("error.njk", {
+        site: "foo.ch.gov.ua",
+        status: 405,
+        heading: "Метод не дозволено",
+        message: "Цей сайт приймає лише GET-запити.",
+      }),
+      { status: 405, headers: { ...HTML_HEADERS, allow: "GET" } },
+    );
   }
 
-  return new Response("Сторінку не знайдено.\n", { status: 404 });
+  return new Response(
+    renderTemplate("error.njk", {
+      site: "foo.ch.gov.ua",
+      status: 404,
+      heading: "Сторінку не знайдено",
+      message: "Такої сторінки на сайті немає.",
+    }),
+    { status: 404, headers: HTML_HEADERS },
+  );
 }
 
 // Цей блок працює лише під час прямого запуску файла, а не під час імпорту з dev.js.

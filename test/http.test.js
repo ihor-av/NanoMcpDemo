@@ -31,6 +31,44 @@ describe("plain Bun HTTP handlers", () => {
     expect(script).toContain('fetch("/api/announcements")');
   });
 
+  it("each mock site serves an HTML homepage", async () => {
+    const sites = [
+      ["foo", handleFooRequest],
+      ["bar", handleBarRequest],
+      ["baz", handleBazRequest],
+    ];
+
+    for (const [name, handler] of sites) {
+      const response = await handler(new Request(`http://${name}.test/`));
+      const html = await response.text();
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-type")).toContain("text/html");
+      expect(html).toContain("<!doctype html>");
+    }
+  });
+
+  it("each mock site renders HTML for 404 and 405", async () => {
+    const sites = [
+      ["foo", handleFooRequest],
+      ["bar", handleBarRequest],
+      ["baz", handleBazRequest],
+    ];
+
+    for (const [name, handler] of sites) {
+      const missing = await handler(new Request(`http://${name}.test/does-not-exist`));
+      expect(missing.status).toBe(404);
+      expect(missing.headers.get("content-type")).toContain("text/html");
+
+      const wrongMethod = await handler(
+        new Request(`http://${name}.test/does-not-exist`, { method: "POST" }),
+      );
+      expect(wrongMethod.status).toBe(405);
+      expect(wrongMethod.headers.get("content-type")).toContain("text/html");
+      expect(wrongMethod.headers.get("allow")).toBe("GET");
+    }
+  });
+
   it("foo answers a POST request with 405 Method Not Allowed", async () => {
     const request = new Request("http://foo.test/api/announcements", { method: "POST" });
     const response = await handleFooRequest(request);
