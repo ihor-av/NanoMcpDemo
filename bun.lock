@@ -7,7 +7,6 @@
       "dependencies": {
         "@modelcontextprotocol/server": "2.4.0",
         "nunjucks": "3.2.4",
-        "zod": "4.6.7",
       },
     },
   },
