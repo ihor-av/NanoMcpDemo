@@ -11,11 +11,11 @@
 
   <main>
     {% for item in announcements %}
-    <article class="announcement">
-      <h2><a href="/announcements/{{ item.id }}">{{ item.title }}</a></h2>
-      <time datetime="{{ item.date }}">{{ item.date }}</time>
+    <div class="news-card">
+      <h3 class="news-title"><a href="/announcements/{{ item.id }}">{{ item.title }}</a></h3>
+      <span class="news-date">{{ item.date }}</span>
       <p>{{ item.summary }}</p>
-    </article>
+    </div>
     {% endfor %}
   </main>
 </body>

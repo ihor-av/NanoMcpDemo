@@ -1,12 +1,15 @@
 /**
  * foo.ch.gov.ua — сайт із недокументованим внутрішнім JSON API.
  *
+ * Ця гілка змінює форму API й оновлює JavaScript сайту разом із нею.
+ * Звичайна сторінка працює, а наш MCP-інструмент зі старими припущеннями — ні.
+ *
  * На головній сторінці адреси API немає. Однак браузерний JavaScript
  * використовує її, тому адресу можна побачити в інструментах розробника.
  *
  * GET /                    → сторінка, яку бачить звичайний користувач
- * GET /assets/app.js       → JavaScript цієї сторінки
- * GET /api/announcements   → { items: [...] }
+ * GET /assets/app.js       → оновлений JavaScript цієї сторінки
+ * GET /api/announcements   → { data: [...] }
  * GET /announcements/:id   → одне оголошення
  */
 import { ANNOUNCEMENTS } from "../shared/data.js";
@@ -31,13 +34,13 @@ export function handleFooRequest(request) {
   if (request.method === "GET" && pathname === "/api/announcements") {
     const items = ANNOUNCEMENTS.map((item) => ({
       id: item.id,
-      title: item.title,
-      date: item.date,
-      url: `/announcements/${item.id}`,
+      name: item.title,
+      published_at: item.date,
+      link: `/announcements/${item.id}`,
     }));
 
     // Так ми кажемо клієнту: ця відповідь містить JSON.
-    return Response.json({ items });
+    return Response.json({ data: items });
   }
 
   // Шлях /announcements/1 дає нам announcementId = "1".
