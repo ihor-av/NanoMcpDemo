@@ -1,11 +1,14 @@
 /**
  * baz.ch.gov.ua — пастка.
  *
+ * Ця гілка імітує зміну словника JSON-LD. Видимий HTML не змінився,
+ * тому запасний шлях через HTML досі працює.
+ *
  * API немає. Ми свідомо повертаємо на /api/announcements HTTP 200 і text/html,
  * тому наївний response.json() падає на першому символі.
  *
  * Справжні дані — на серверно зрендереній сторінці:
- *   GET /announcements     → JSON-LD ItemList + видимий <article class="announcement">
+ *   GET /announcements     → JSON-LD + видимий <article class="announcement">
  *   GET /announcements/:id → HTML-сторінка оголошення
  */
 import { ANNOUNCEMENTS } from "../shared/data.js";
@@ -75,14 +78,17 @@ export function handleBazRequest(request) {
 function jsonLd() {
   return JSON.stringify({
     "@context": "https://schema.org",
-    "@type": "ItemList",
-    itemListElement: ANNOUNCEMENTS.map((item) => ({
-      "@type": "NewsArticle",
-      headline: item.title,
-      datePublished: item.date,
-      description: item.summary,
-      url: `/announcements/${item.id}`,
-    })),
+    "@type": "CollectionPage",
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: ANNOUNCEMENTS.map((item) => ({
+        "@type": "Article",
+        name: item.title,
+        dateCreated: item.date,
+        description: item.summary,
+        url: `/announcements/${item.id}`,
+      })),
+    },
   });
 }
 
