@@ -8,7 +8,9 @@
  * контракт, на який спирається скрапер, і це не справжній контракт.
  */
 import { ANNOUNCEMENTS } from "../shared/data.js";
-import { escapeHtml, page } from "../shared/html.js";
+import { renderTemplate } from "../shared/templates.js";
+
+const HTML_HEADERS = { "content-type": "text/html; charset=utf-8" };
 
 export function handleBarRequest(request) {
   const pathname = new URL(request.url).pathname;
@@ -25,9 +27,11 @@ export function handleBarRequest(request) {
   }
 
   if (request.method === "GET" && pathname === "/announcements") {
-    return new Response(listPage(), {
-      headers: { "content-type": "text/html; charset=utf-8" },
+    // Шаблон отримує дані й повертає готову HTML-сторінку.
+    const html = renderTemplate("bar/announcements.njk", {
+      announcements: ANNOUNCEMENTS,
     });
+    return new Response(html, { headers: HTML_HEADERS });
   }
 
   const announcementMatch = pathname.match(/^\/announcements\/([^/]+)$/);
@@ -36,14 +40,14 @@ export function handleBarRequest(request) {
     const item = ANNOUNCEMENTS.find((announcement) => announcement.id === announcementId);
 
     if (!item) {
-      return new Response(page("Не знайдено", "<h1>404</h1>"), {
+      return new Response(renderTemplate("bar/not-found.njk"), {
         status: 404,
-        headers: { "content-type": "text/html; charset=utf-8" },
+        headers: HTML_HEADERS,
       });
     }
 
-    return new Response(detailPage(item), {
-      headers: { "content-type": "text/html; charset=utf-8" },
+    return new Response(renderTemplate("bar/announcement.njk", { item }), {
+      headers: HTML_HEADERS,
     });
   }
 
@@ -55,37 +59,6 @@ export function handleBarRequest(request) {
   }
 
   return new Response("Not found.\n", { status: 404 });
-}
-
-function listPage() {
-  const items = ANNOUNCEMENTS.map(
-    (item) => `<article class="announcement">
-  <h2><a href="/announcements/${item.id}">${escapeHtml(item.title)}</a></h2>
-  <time datetime="${item.date}">${escapeHtml(item.date)}</time>
-  <p>${escapeHtml(item.summary)}</p>
-</article>`,
-  ).join("\n");
-
-  return page(
-    "Оголошення — bar.ch.gov.ua",
-    `<h1>Оголошення</h1>
-<main>
-${items}
-</main>`,
-  );
-}
-
-function detailPage(item) {
-  return page(
-    `${item.title} — bar.ch.gov.ua`,
-    `<article class="announcement-detail">
-  <h1>${escapeHtml(item.title)}</h1>
-  <time datetime="${item.date}">${escapeHtml(item.date)}</time>
-  <p>${escapeHtml(item.body)}</p>
-  <p>Адреса: ${escapeHtml(item.address)}</p>
-</article>
-<p><a href="/announcements">Назад</a></p>`,
-  );
 }
 
 if (import.meta.main) {

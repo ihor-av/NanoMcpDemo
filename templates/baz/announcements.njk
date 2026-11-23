@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <title>Оголошення — baz.ch.gov.ua</title>
+</head>
+<body>
+  <h1>Оголошення</h1>
+
+  <script type="application/ld+json">{{ jsonLd | safe }}</script>
+
+  <main>
+    {% for item in announcements %}
+    <article class="announcement">
+      <h2><a href="/announcements/{{ item.id }}">{{ item.title }}</a></h2>
+      <time datetime="{{ item.date }}">{{ item.date }}</time>
+      <p>{{ item.summary }}</p>
+    </article>
+    {% endfor %}
+  </main>
+</body>
+</html>

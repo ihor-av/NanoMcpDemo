@@ -64,6 +64,34 @@ describe("plain Bun HTTP handlers", () => {
     expect(response.headers.get("content-type")).toContain("text/html");
   });
 
+  it("bar renders the detail template with announcement text", async () => {
+    const response = await handleBarRequest(new Request("http://bar.test/announcements/1"));
+    const html = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(html).toContain("Про затвердження бюджету громади на 2027 рік");
+    expect(html).toContain('<article class="announcement-detail">');
+  });
+
+  it("baz renders both JSON-LD and visible announcement HTML", async () => {
+    const response = await handleBazRequest(new Request("http://baz.test/announcements"));
+    const html = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(html).toContain('<script type="application/ld+json">');
+    expect(html).toContain('"@type":"ItemList"');
+    expect(html).toContain('<article class="announcement">');
+  });
+
+  it("baz renders the detail template", async () => {
+    const response = await handleBazRequest(new Request("http://baz.test/announcements/2"));
+    const html = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(html).toContain("Громадські слухання щодо Програми розвитку на 2027–2030 роки");
+    expect(html).toContain('<article class="announcement-detail">');
+  });
+
   it("the MCP server still has an ordinary GET health route", async () => {
     const request = new Request("http://mcp.test/health");
     const response = await handleMcpRequest(request);

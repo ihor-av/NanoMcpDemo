@@ -10,46 +10,20 @@
  * GET /announcements/:id   → одне оголошення
  */
 import { ANNOUNCEMENTS } from "../shared/data.js";
-import { page } from "../shared/html.js";
+import { renderTemplate } from "../shared/templates.js";
 
-// Цей код виконується в браузері, а не на сервері Bun.
-// Саме рядок fetch("/api/announcements") розкриває адресу внутрішнього API.
-const BROWSER_SCRIPT = `
-async function loadAnnouncements() {
-  const response = await fetch("/api/announcements");
-  const data = await response.json();
-  const list = document.querySelector("#announcements");
-  list.textContent = "";
-
-  for (const announcement of data.items) {
-    const item = document.createElement("li");
-    item.textContent = announcement.date + " — " + announcement.title;
-    list.append(item);
-  }
-}
-
-loadAnnouncements().catch(() => {
-  document.querySelector("#announcements").textContent = "Не вдалося завантажити оголошення.";
-});
-`;
+const HTML_HEADERS = { "content-type": "text/html; charset=utf-8" };
 
 export function handleFooRequest(request) {
   const pathname = new URL(request.url).pathname;
 
   if (request.method === "GET" && pathname === "/") {
-    return new Response(
-      page(
-        "Оголошення — foo.ch.gov.ua",
-        `<h1>Оголошення</h1>
-<ul id="announcements">Завантаження…</ul>
-<script src="/assets/app.js"></script>`,
-      ),
-      { headers: { "content-type": "text/html; charset=utf-8" } },
-    );
+    return new Response(renderTemplate("foo/index.njk"), { headers: HTML_HEADERS });
   }
 
+  // The browser loads this separate file. It is where the internal API is revealed.
   if (request.method === "GET" && pathname === "/assets/app.js") {
-    return new Response(BROWSER_SCRIPT, {
+    return new Response(Bun.file(new URL("./app.js", import.meta.url)), {
       headers: { "content-type": "text/javascript; charset=utf-8" },
     });
   }

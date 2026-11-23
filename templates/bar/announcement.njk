@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <title>{{ item.title }} — bar.ch.gov.ua</title>
+</head>
+<body>
+  <article class="announcement-detail">
+    <h1>{{ item.title }}</h1>
+    <time datetime="{{ item.date }}">{{ item.date }}</time>
+    <p>{{ item.body }}</p>
+    <p>Адреса: {{ item.address }}</p>
+  </article>
+
+  <p><a href="/announcements">Назад</a></p>
+</body>
+</html>

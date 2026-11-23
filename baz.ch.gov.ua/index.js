@@ -9,7 +9,7 @@
  *   GET /announcements/:id → HTML-сторінка оголошення
  */
 import { ANNOUNCEMENTS } from "../shared/data.js";
-import { escapeHtml, page } from "../shared/html.js";
+import { renderTemplate } from "../shared/templates.js";
 
 const HTML_HEADERS = { "content-type": "text/html; charset=utf-8" };
 
@@ -32,19 +32,17 @@ export function handleBazRequest(request) {
    * Статус успіху не означає, що відповідь містить JSON.
    */
   if (request.method === "GET" && pathname === "/api/announcements") {
-    return new Response(
-      page(
-        "Сторінку не знайдено — baz.ch.gov.ua",
-        `<h1>Сторінку не знайдено</h1>
-<p>Можливо, ви мали на увазі <a href="/announcements">/announcements</a>.</p>
-<p>Це не API. Це HTML-оболонка застосунку.</p>`,
-      ),
-      { headers: HTML_HEADERS },
-    );
+    return new Response(renderTemplate("baz/guessed-api.njk"), {
+      headers: HTML_HEADERS,
+    });
   }
 
   if (request.method === "GET" && pathname === "/announcements") {
-    return new Response(listPage(), { headers: HTML_HEADERS });
+    const html = renderTemplate("baz/announcements.njk", {
+      announcements: ANNOUNCEMENTS,
+      jsonLd: jsonLd(),
+    });
+    return new Response(html, { headers: HTML_HEADERS });
   }
 
   const announcementMatch = pathname.match(/^\/announcements\/([^/]+)$/);
@@ -53,13 +51,15 @@ export function handleBazRequest(request) {
     const item = ANNOUNCEMENTS.find((announcement) => announcement.id === announcementId);
 
     if (!item) {
-      return new Response(page("Не знайдено", "<h1>404</h1>"), {
+      return new Response(renderTemplate("baz/not-found.njk"), {
         status: 404,
         headers: HTML_HEADERS,
       });
     }
 
-    return new Response(detailPage(item), { headers: HTML_HEADERS });
+    return new Response(renderTemplate("baz/announcement.njk", { item }), {
+      headers: HTML_HEADERS,
+    });
   }
 
   if (request.method !== "GET") {
@@ -70,19 +70,6 @@ export function handleBazRequest(request) {
   }
 
   return new Response("Not found.\n", { status: 404 });
-}
-
-function detailPage(item) {
-  return page(
-    `${item.title} — baz.ch.gov.ua`,
-    `<article class="announcement-detail">
-  <h1>${escapeHtml(item.title)}</h1>
-  <time datetime="${item.date}">${escapeHtml(item.date)}</time>
-  <p>${escapeHtml(item.body)}</p>
-  <p>Адреса: ${escapeHtml(item.address)}</p>
-</article>
-<p><a href="/announcements">Назад</a></p>`,
-  );
 }
 
 function jsonLd() {
@@ -97,25 +84,6 @@ function jsonLd() {
       url: `/announcements/${item.id}`,
     })),
   });
-}
-
-function listPage() {
-  const items = ANNOUNCEMENTS.map(
-    (item) => `<article class="announcement">
-  <h2><a href="/announcements/${item.id}">${escapeHtml(item.title)}</a></h2>
-  <time datetime="${item.date}">${escapeHtml(item.date)}</time>
-  <p>${escapeHtml(item.summary)}</p>
-</article>`,
-  ).join("\n");
-
-  return page(
-    "Оголошення — baz.ch.gov.ua",
-    `<h1>Оголошення</h1>
-<script type="application/ld+json">${jsonLd()}</script>
-<main>
-${items}
-</main>`,
-  );
 }
 
 if (import.meta.main) {
