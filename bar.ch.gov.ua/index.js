@@ -1,6 +1,7 @@
 /**
  * bar.ch.gov.ua — департамент із серверною HTML-версткою без API.
  *
+ * GET /                 → та сама HTML-сторінка зі списком
  * GET /announcements     → HTML-список
  * GET /announcements/:id → HTML-сторінка оголошення
  *
@@ -16,14 +17,10 @@ export function handleBarRequest(request) {
   const pathname = new URL(request.url).pathname;
 
   if (request.method === "GET" && pathname === "/") {
-    return new Response(
-      [
-        "bar.ch.gov.ua — mock server-rendered site",
-        "",
-        "GET /announcements",
-        "GET /announcements/1",
-      ].join("\n"),
-    );
+    const html = renderTemplate("bar/announcements.njk", {
+      announcements: ANNOUNCEMENTS,
+    });
+    return new Response(html, { headers: HTML_HEADERS });
   }
 
   if (request.method === "GET" && pathname === "/announcements") {
