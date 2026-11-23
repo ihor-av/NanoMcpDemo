@@ -4,9 +4,9 @@ async function loadAnnouncements() {
   const list = document.querySelector("#announcements");
   list.textContent = "";
 
-  for (const announcement of data.items) {
+  for (const announcement of data.data) {
     const item = document.createElement("li");
-    item.textContent = announcement.date + " — " + announcement.title;
+    item.textContent = announcement.published_at + " — " + announcement.name;
     list.append(item);
   }
 }
