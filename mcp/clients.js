@@ -1,7 +1,7 @@
 /**
  * Чотири шляхи доступу в одному файлі.
  *
- * foo: JSON API.
+ * foo: внутрішнє JSON API, адресу якого розкриває браузерний JavaScript.
  * bar: серверний HTML.
  * baz: вигаданий API, потім JSON-LD, потім HTML.
  * all: усі три джерела зі звітом про помилки кожного.
@@ -51,7 +51,7 @@ async function fetchText(url) {
   return response.text();
 }
 
-// --- foo: JSON API ---------------------------------------------------------
+// --- foo: внутрішнє JSON API ----------------------------------------------
 
 export async function fooAnnouncements() {
   const data = await fetchJson(`${FOO_URL}/api/announcements`);

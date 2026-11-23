@@ -2,7 +2,7 @@
  * Поверхня MCP. Чотири інструменти лише для читання.
  *
  * Кожен — це різний ризик щодо чужого виводу:
- *   foo — JSON API, форма якого може змінитися
+ *   foo — внутрішнє JSON API, яке видно в браузері, і його форма може змінитися
  *   bar — серверна сторінка, розмітка якої може змінитися
  *   baz — вигаданий API, потім JSON-LD, потім HTML
  *   all — усі три джерела зі звітом про помилки кожного
@@ -44,10 +44,11 @@ export function buildServer() {
   server.registerTool(
     "foo_announcements",
     {
-      title: "foo.ch.gov.ua announcements (JSON API)",
+      title: "foo.ch.gov.ua announcements (internal JSON API)",
       description:
-        "Reads the mock city JSON API. It assumes { items: [...] }. If the shape changes, " +
-        "this tool returns an explicit error instead of an empty list.",
+        "Reads the undocumented JSON API used by foo's own browser page. It assumes " +
+        "{ items: [...] }. If the shape changes, this tool returns an explicit error " +
+        "instead of an empty list.",
       inputSchema: z.object({}),
       annotations: readOnly,
     },

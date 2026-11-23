@@ -16,6 +16,21 @@ describe("plain Bun HTTP handlers", () => {
     expect(data.items).toHaveLength(6);
   });
 
+  it("foo lets the browser discover its internal API through JavaScript", async () => {
+    const pageResponse = await handleFooRequest(new Request("http://foo.test/"));
+    const html = await pageResponse.text();
+
+    expect(pageResponse.headers.get("content-type")).toContain("text/html");
+    expect(html).toContain('/assets/app.js');
+    expect(html).not.toContain('/api/announcements');
+
+    const scriptResponse = await handleFooRequest(new Request("http://foo.test/assets/app.js"));
+    const script = await scriptResponse.text();
+
+    expect(scriptResponse.headers.get("content-type")).toContain("text/javascript");
+    expect(script).toContain('fetch("/api/announcements")');
+  });
+
   it("foo answers a POST request with 405 Method Not Allowed", async () => {
     const request = new Request("http://foo.test/api/announcements", { method: "POST" });
     const response = await handleFooRequest(request);

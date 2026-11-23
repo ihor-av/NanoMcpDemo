@@ -21,7 +21,7 @@ const servers = [
 console.log(`
 NanoMCP demo:
 
-  foo.ch.gov.ua   http://127.0.0.1:4101   JSON API (GET)
+  foo.ch.gov.ua   http://127.0.0.1:4101   browser page + internal JSON API
   bar.ch.gov.ua   http://127.0.0.1:4102   HTML pages (GET)
   baz.ch.gov.ua   http://127.0.0.1:4103   HTML + JSON-LD (GET)
   MCP             http://127.0.0.1:8787/mcp   MCP messages (POST)
