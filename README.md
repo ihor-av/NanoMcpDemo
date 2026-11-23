@@ -372,13 +372,17 @@ test/parsers.test.js       старі фікстури й навмисно зм�
 ```js
 server.registerTool(
   "foo_announcements",
-  { description: "Read announcements from foo", inputSchema: z.object({}) },
+  { description: "Read announcements from foo" },
   async () => {
     const items = await fooAnnouncements();
     // Повертаємо результат MCP-клієнту.
   },
 );
 ```
+
+Інструменти без аргументів не потребують `inputSchema`: MCP SDK сам
+оголошує порожню схему. Якщо інструмент почне приймати аргументи, схему
+можна описати звичайним JSON Schema або бібліотекою на кшталт Zod.
 
 Справжній файл також додає форматування результату, анотації та обробку
 помилок. Це деталі; головна ідея — «іменована JavaScript-функція, яку
