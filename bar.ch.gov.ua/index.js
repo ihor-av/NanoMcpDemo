@@ -49,13 +49,26 @@ export function handleBarRequest(request) {
   }
 
   if (request.method !== "GET") {
-    return new Response("This site only accepts GET requests.\n", {
-      status: 405,
-      headers: { allow: "GET" },
-    });
+    return new Response(
+      renderTemplate("error.njk", {
+        site: "bar.ch.gov.ua",
+        status: 405,
+        heading: "Метод не дозволено",
+        message: "Цей сайт приймає лише GET-запити.",
+      }),
+      { status: 405, headers: { ...HTML_HEADERS, allow: "GET" } },
+    );
   }
 
-  return new Response("Not found.\n", { status: 404 });
+  return new Response(
+    renderTemplate("error.njk", {
+      site: "bar.ch.gov.ua",
+      status: 404,
+      heading: "Сторінку не знайдено",
+      message: "Такої сторінки на сайті немає.",
+    }),
+    { status: 404, headers: HTML_HEADERS },
+  );
 }
 
 if (import.meta.main) {
