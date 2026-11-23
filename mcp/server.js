@@ -8,7 +8,6 @@
  *   all — усі три джерела зі звітом про помилки кожного
  */
 import { McpServer } from "@modelcontextprotocol/server";
-import { z } from "zod";
 import {
   allAnnouncements,
   barAnnouncements,
@@ -49,7 +48,6 @@ export function buildServer() {
         "Reads the undocumented JSON API used by foo's own browser page. It assumes " +
         "{ items: [...] }. If the shape changes, this tool returns an explicit error " +
         "instead of an empty list.",
-      inputSchema: z.object({}),
       annotations: readOnly,
     },
     async () => {
@@ -69,7 +67,6 @@ export function buildServer() {
       description:
         'Scrapes the mock press-service page. It assumes <article class="announcement">. ' +
         "If the markup changes, this tool returns an explicit parse error instead of pretending there are no announcements.",
-      inputSchema: z.object({}),
       annotations: readOnly,
     },
     async () => {
@@ -89,7 +86,6 @@ export function buildServer() {
       description:
         "Tries the guessed API, then JSON-LD, then visible HTML. The result says which " +
         "layer answered and what failed. Fallbacks help until every layer changes.",
-      inputSchema: z.object({}),
       annotations: readOnly,
     },
     async () => {
@@ -115,7 +111,6 @@ export function buildServer() {
       description:
         "Aggregates foo, bar, and baz. One broken source does not hide the others. " +
         "The result includes a per-source report, so the model can say which integration is down.",
-      inputSchema: z.object({}),
       annotations: readOnly,
     },
     async () => {
