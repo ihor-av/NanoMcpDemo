@@ -8,6 +8,7 @@
  * тому наївний response.json() падає на першому символі.
  *
  * Справжні дані — на серверно зрендереній сторінці:
+ *   GET /                 → та сама HTML-сторінка зі списком
  *   GET /announcements     → JSON-LD + видимий <article class="announcement">
  *   GET /announcements/:id → HTML-сторінка оголошення
  */
@@ -20,14 +21,11 @@ export function handleBazRequest(request) {
   const pathname = new URL(request.url).pathname;
 
   if (request.method === "GET" && pathname === "/") {
-    return new Response(
-      [
-        "baz.ch.gov.ua — mock open data portal",
-        "",
-        "GET /announcements",
-        "GET /api/announcements  (not an API: it returns HTML with HTTP 200)",
-      ].join("\n"),
-    );
+    const html = renderTemplate("baz/announcements.njk", {
+      announcements: ANNOUNCEMENTS,
+      jsonLd: jsonLd(),
+    });
+    return new Response(html, { headers: HTML_HEADERS });
   }
 
   /**
@@ -66,13 +64,26 @@ export function handleBazRequest(request) {
   }
 
   if (request.method !== "GET") {
-    return new Response("This site only accepts GET requests.\n", {
-      status: 405,
-      headers: { allow: "GET" },
-    });
+    return new Response(
+      renderTemplate("error.njk", {
+        site: "baz.ch.gov.ua",
+        status: 405,
+        heading: "Метод не дозволено",
+        message: "Цей сайт приймає лише GET-запити.",
+      }),
+      { status: 405, headers: { ...HTML_HEADERS, allow: "GET" } },
+    );
   }
 
-  return new Response("Not found.\n", { status: 404 });
+  return new Response(
+    renderTemplate("error.njk", {
+      site: "baz.ch.gov.ua",
+      status: 404,
+      heading: "Сторінку не знайдено",
+      message: "Такої сторінки на сайті немає.",
+    }),
+    { status: 404, headers: HTML_HEADERS },
+  );
 }
 
 function jsonLd() {
