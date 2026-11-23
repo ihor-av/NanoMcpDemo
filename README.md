@@ -18,9 +18,8 @@ MCP is JSON-RPC between an AI client and a server.
 The client asks `tools/list`; the model picks a tool; the client sends
 `tools/call`; your code runs and returns text or JSON. That is the whole idea.
 
-This project uses the official TypeScript SDK for the protocol and Hono for the
-HTTP server. The SDK parses the JSON-RPC messages and dispatches them to the
-functions registered in `mcp/server.js`.
+This project uses the official MCP server SDK for the protocol and Hono for the
+HTTP server. Bun runs the JavaScript directly; there is no build step.
 
 ---
 
