@@ -4,7 +4,7 @@
  * GET /api/announcements  → { items: [...] }
  * GET /announcements/:id  → одне оголошення
  *
- * Жодного веб-фреймворка: один Request входить, один Response виходить.
+ * Жодного веб-фреймворка: функція отримує запит і повертає відповідь.
  */
 import { ANNOUNCEMENTS } from "../shared/data.js";
 
@@ -30,7 +30,7 @@ export function handleFooRequest(request) {
       url: `/announcements/${item.id}`,
     }));
 
-    // Response.json sets Content-Type: application/json for us.
+    // Так ми кажемо клієнту: ця відповідь містить JSON.
     return Response.json({ items });
   }
 

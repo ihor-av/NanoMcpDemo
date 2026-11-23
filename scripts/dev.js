@@ -9,8 +9,8 @@ import { handleBarRequest } from "../bar.ch.gov.ua/index.js";
 import { handleBazRequest } from "../baz.ch.gov.ua/index.js";
 import { handleMcpRequest } from "../mcp/index.js";
 
-// Bun.serve calls the matching function whenever an HTTP request arrives.
-// Each function receives a standard Request and returns a standard Response.
+// Коли надходить HTTP-запит, Bun.serve викликає відповідну функцію.
+// Кожна функція отримує запит і готує відповідь.
 const servers = [
   Bun.serve({ port: 4101, fetch: handleFooRequest }),
   Bun.serve({ port: 4102, fetch: handleBarRequest }),

@@ -7,18 +7,7 @@
  *
  * Зміст вигаданий. Вулиці — справжні чернівецькі адреси,
  * бо саме з цим працює реальний проєкт.
- *
- * @typedef {Object} Announcement
- * @property {string} id
- * @property {string} title
- * @property {string} date
- * @property {string} summary
- * @property {string} body
- * @property {string} address
- * @property {string} [url]
  */
-
-/** @type {Announcement[]} */
 export const ANNOUNCEMENTS = [
   {
     id: "1",
