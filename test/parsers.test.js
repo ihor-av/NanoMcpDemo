@@ -2,11 +2,11 @@ import { describe, expect, it } from "bun:test";
 import { parseBar, parseBazHtml, parseBazJsonLd, parseFoo } from "../mcp/clients.js";
 
 /**
- * These tests pass.
+ * Ці тести проходять.
  *
- * That is the point and the trap. They prove the parser matches a fixture.
- * They do not prove the live site still returns that fixture.
- * A test is a photograph of an upstream, not a promise from it.
+ * У цьому і суть, і пастка. Вони доводять, що парсер відповідає фікстурі.
+ * Вони не доводять, що живе джерело досі повертає цю фікстуру.
+ * Тест — це фотографія зовнішнього джерела, а не його обіцянка.
  */
 
 const FOO_OK = {
@@ -72,7 +72,7 @@ describe("foo: JSON API", () => {
   });
 });
 
-describe("bar: SSR HTML", () => {
+describe("bar: HTML scraping", () => {
   it("parses the expected markup", () => {
     const items = parseBar(BAR_OK, "http://127.0.0.1:4102");
     expect(items).toHaveLength(1);

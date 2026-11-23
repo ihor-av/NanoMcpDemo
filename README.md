@@ -1,226 +1,321 @@
-# NanoMCP — a small, honest city MCP
+# NanoMCP — MCP-інструменти та нестабільні джерела даних
 
-> The MCP server is not the hard part.
-> The hard part is that every tool is a bet on somebody else's unversioned output.
+> MCP дає AI-клієнту стандартний спосіб викликати ваш код.
+> Але він **не** робить стабільними сайти, до яких цей код звертається.
 
-This is a teaching project for developers who are about to work on the real
-Chernivtsi City MCP. It is deliberately tiny: **no database, no cache, no auth,
-no CSS, no deployment**.
+Це маленький навчальний проєкт. Три імітаційні міські сайти публікують ті самі
+шість вигаданих оголошень у різних форматах. Чотири MCP-інструменти читають їх.
+Тут немає бази даних, кешу, автентифікації, CSS, етапу збирання чи розгортання.
 
-Three mock government sites, four MCP tools, one Bun process.
-
----
-
-## What MCP is, in five lines
-
-MCP is JSON-RPC between an AI client and a server.
-
-The client asks `tools/list`; the model picks a tool; the client sends
-`tools/call`; your code runs and returns text or JSON. That is the whole idea.
-
-This project uses the official MCP server SDK for the protocol and Hono for the
-HTTP server. Bun runs the JavaScript directly; there is no build step.
+**Почніть тут, якщо ви новачок:** у `foo.ch.gov.ua/index.js` одна звичайна
+функція отримує стандартний веб-об'єкт `Request` і повертає `Response`.
+Жоден фреймворк не приховує від вас GET-запити й маршрутизацію.
 
 ---
 
-## Run it
+## 1. Що таке MCP
+
+AI-застосунку (**MCP-клієнту**) треба викликати код поза моделлю. MCP
+стандартизує такі виклики:
+
+1. Клієнт надсилає `tools/list`: «Які в тебе є інструменти?»
+2. Модель бачить назви й описи інструментів та обирає один із них.
+3. Клієнт надсилає `tools/call`: «Виконай цей інструмент».
+4. Ваша JavaScript-функція виконується й повертає результат.
+
+Повідомлення MCP використовують JSON-RPC: JSON-повідомлення з назвами методів,
+як-от `tools/list`, ідентифікаторами, аргументами та результатами. У цьому
+прикладі офіційний MCP SDK обробляє ці деталі протоколу.
+
+MCP — **не** парсер сайтів, не база даних і не обіцянка, що формат зовнішніх
+даних ніколи не зміниться. Наші інструменти досі мають самі отримати й
+зрозуміти відповідь кожного сайту.
+
+```text
+AI-застосунок / pi
+       |
+       | POST /mcp: tools/call { name: "bar_announcements" }
+       v
+Наш MCP-сервер -> barAnnouncements()
+       |
+       | GET /announcements
+       v
+Імітаційний міський сайт -> HTML -> наш скрапер -> результат інструмента
+```
+
+Головне розрізнення: **POST `/mcp`** — це спілкування MCP-клієнта з нашим
+сервером. Потім інструмент робить звичайний **GET**-запит до сайту.
+
+---
+
+## 2. Запуск
+
+Вам знадобляться [Bun](https://bun.sh/) і, для прикладу з AI-клієнтом, `pi`.
 
 ```bash
 bun install
 bun run dev
 ```
 
-```text
-foo.ch.gov.ua   http://127.0.0.1:4101   JSON API
-bar.ch.gov.ua   http://127.0.0.1:4102   SSR HTML
-baz.ch.gov.ua   http://127.0.0.1:4103   guessed API + JSON-LD + HTML
-MCP             http://127.0.0.1:8787/mcp
+Залиште цю команду працювати. Вона запускає чотири сервери:
+
+| Сервер | URL | Що він повертає |
+|---|---|---|
+| foo | http://127.0.0.1:4101 | JSON API |
+| bar | http://127.0.0.1:4102 | HTML-сторінки |
+| baz | http://127.0.0.1:4103 | HTML із JSON-LD |
+| MCP | http://127.0.0.1:8787/mcp | MCP-інструменти |
+
+Відкрийте ці адреси в браузері. Звичайний перехід у браузері надсилає `GET`:
+
+- <http://127.0.0.1:4101/api/announcements> — JSON, зручний для коду.
+- <http://127.0.0.1:4102/announcements> — HTML, призначений для людей.
+- <http://127.0.0.1:4103/api/announcements> — **HTTP 200, але HTML, не JSON**.
+
+Порівняйте код із відповіддю:
+
+```js
+if (request.method === "GET" && pathname === "/api/announcements") {
+  return Response.json({ items });
+}
 ```
 
-All three sites serve the same six announcements. The announcements are
-fictional. The street addresses are real Chernivtsi addresses.
+У кінці файла кожного сайту `Bun.serve` поєднує порт із такою функцією:
+
+```js
+Bun.serve({ port: 4101, fetch: handleFooRequest });
+```
+
+`scripts/dev.js` робить це чотири рази. Можна запустити й лише один сайт,
+наприклад `bun foo.ch.gov.ua/index.js`.
+
+Усі оголошення вигадані. Вуличні адреси — справжні чернівецькі адреси.
 
 ---
 
-## Connect a real AI client
+## 3. Підключення справжнього AI-клієнта
 
-There is no project MCP config to maintain. Add the running server once:
+У другому терміналі зареєструйте запущений сервер у `pi`:
 
 ```bash
 pi mcp add nanomcp --url http://127.0.0.1:8787/mcp --exposure direct
 pi mcp list
 ```
 
+Ви маєте побачити `nanomcp: connected, 4 tools` і чотири назви:
+
 ```text
-nanomcp: connected, 4 tools (direct, global)
-  http://127.0.0.1:8787/mcp
-  tools: foo_announcements, bar_announcements, baz_announcements,
-         all_announcements
+foo_announcements, bar_announcements, baz_announcements, all_announcements
 ```
 
-Ask the model to use it:
+Попросіть модель викликати їх за повними назвами інструментів у `pi`:
 
 ```bash
-pi -p --model opencode-go/deepseek-v4.1-flash \
-  "Call mcp__nanomcp__foo_announcements, mcp__nanomcp__bar_announcements, \
-   mcp__nanomcp__baz_announcements, and mcp__nanomcp__all_announcements. \
-   Reply with the count and access mode of each."
+pi -p "Call mcp__nanomcp__foo_announcements, \
+mcp__nanomcp__bar_announcements, mcp__nanomcp__baz_announcements, and \
+mcp__nanomcp__all_announcements. For each call, report its count, access mode, \
+and whether it returned an error."
 ```
 
-Observed:
+На робочій гілці `main` очікуйте такого результату:
 
 ```text
-- foo: 6, json-api
-- bar: 6, html
-- baz: 6, json-ld (the API guess returned HTML)
-- all: 6 total, 3/3 sources OK
+foo: 6 через json-api
+bar: 6 через html
+baz: 6 через json-ld із попередженням, що вигаданий API повернув HTML
+all: 6 унікальних оголошень; усі 3 джерела працюють (18 елементів до видалення дублікатів)
 ```
 
-Remove it when you are done:
+Після завершення видаліть реєстрацію сервера:
 
 ```bash
 pi mcp remove nanomcp
 ```
 
----
+### Необов'язково: подивіться tools/list без AI-моделі
 
-## The sites and the tools
-
-| Site | Routes | The bet |
-|---|---|---|
-| `foo.ch.gov.ua` | `GET /api/announcements` | The JSON shape `{ items: [...] }` stays the same. |
-| `bar.ch.gov.ua` | `GET /announcements` | The HTML keeps `<article class="announcement">`. |
-| `baz.ch.gov.ua` | `GET /announcements` | There is a guessed API; JSON-LD and HTML are stable. |
-
-| Tool | Reads | Failure |
-|---|---|---|
-| `foo_announcements` | foo JSON | Throws if `items` is missing. |
-| `bar_announcements` | bar HTML | Throws if it parses 0 items. |
-| `baz_announcements` | guessed API → JSON-LD → HTML | Returns the first layer that works, with a warning. |
-| `all_announcements` | all three | `Promise.allSettled`: one failure does not hide the others. |
-
----
-
-## The two code styles
-
-**The agent guesses an API (`foo`):**
-
-```js
-const data = await fetchJson(`${FOO_URL}/api/announcements`);
-return data.items.map((item) => ({ ... }));
-```
-
-That is a bet. The guard in `mcp/clients.js` makes the bet visible:
-
-```js
-if (!isRecord(data) || !Array.isArray(data.items)) {
-  throw new UpstreamError(
-    `foo: expected { items: [...] } but got ${actual}. The JSON API changed shape.`,
-  );
-}
-```
-
-**The agent scrapes SSR HTML (`bar`):**
-
-```js
-const blocks = [...html.matchAll(/<article class="announcement">([\s\S]*?)<\/article>/g)];
-
-if (blocks.length === 0) {
-  throw new UpstreamError("bar: parsed 0 announcements; the markup changed.");
-}
-```
-
-Without the guard, the tool returns `items: []` and the model tells the user
-"there are no announcements." That is worse than an error, because it looks like
-a valid answer.
-
-**The agent guessed an API that does not exist (`baz`):**
-
-`GET /api/announcements` returns **HTTP 200 and `text/html`**. The client checks
-the content type first, then falls back to JSON-LD, then to visible HTML.
-
----
-
-## Break it with git branches
-
-An upstream change is a new version of the site, not a runtime switch. Each
-branch is one commit on top of `main` that simulates a real change.
-
-| Branch | What changed | Expected result |
-|---|---|---|
-| `main` | nothing | all four tools work |
-| `break-foo-api` | foo returns `{ data: [...] }` | foo fails; bar and baz work |
-| `break-bar-html` | bar uses `<div class="news-card">` | bar fails; foo and baz work |
-| `break-baz-jsonld` | baz JSON-LD becomes `CollectionPage` | baz falls back to HTML with a warning |
-| `break-all` | all of the above, plus baz's HTML | all four sources fail; 0 items |
+Це лише HTTP POST із JSON у тілі запиту:
 
 ```bash
-git switch break-foo-api
-# restart the server: Ctrl+C, then bun run dev
-# run the pi prompt again
-
-git diff main..break-foo-api     # see exactly what the upstream changed
-git switch main
+curl http://127.0.0.1:8787/mcp \
+  -H 'content-type: application/json' \
+  -H 'accept: application/json, text/event-stream' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 ```
 
-What you should see:
-
-```text
-break-foo-api:      foo_announcements → ERROR; all_announcements → foo FAIL
-break-bar-html:     bar_announcements → ERROR; all_announcements → bar FAIL
-break-baz-jsonld:   baz_announcements → 6 via html + warning
-break-all:          all_announcements → 0 items, all three sources FAIL
-```
-
-Each failure message says what changed. That is the difference between "the
-city has no announcements" and "we could not read the city's page."
+Знайдіть чотири назви інструментів у відповіді. Під час `tools/list` модель
+не бере участі: вибір інструмента відбувається пізніше.
 
 ---
 
-## Tests
+## 4. Припущення щодо джерел даних
+
+| Сайт | Маршрут, який читає інструмент | Припущення в нашому коді |
+|---|---|---|
+| `foo.ch.gov.ua` | `GET /api/announcements` | JSON залишається `{ items: [...] }`, а кожен елемент зберігає поля `id`, `title` і `date`. |
+| `bar.ch.gov.ua` | `GET /announcements` | HTML зберігає `<article class="announcement">`, `<h2>`, `<time>` і ту саму розмітку посилання. |
+| `baz.ch.gov.ua` | вигаданий API → JSON-LD → HTML | Працює принаймні один із цих неофіційних шляхів доступу. |
+
+Чотири інструменти оголошено в `mcp/server.js`, а код отримання та розбору їхніх
+даних міститься в `mcp/clients.js`.
+
+| Інструмент | Що він демонструє |
+|---|---|
+| `foo_announcements` | JSON зручніше читати кодом, але недокументована JSON-структура теж може змінитися. |
+| `bar_announcements` | Скрапінг HTML залежить від розмітки для оформлення, якої ніхто не обіцяв нашому коду. |
+| `baz_announcements` | Запасні шляхи можуть приховати одну поломку, але не створюють стабільного контракту. |
+| `all_announcements` | `Promise.allSettled` звітує про кожне джерело окремо: одна помилка не стирає решту. |
+
+### Чому парсинг HTML крихкий
+
+HTML-класи й елементи зазвичай обирають для зовнішнього вигляду та людей, а не
+як API для інтеграції. Нешкідливий редизайн може перейменувати `announcement`
+на `news-card`. URL, HTTP-статус і видима інформація можуть залишитися
+правильними, проте наш парсер нічого не знайде.
+
+Постає небезпечне запитання: нуль збігів означає «місто нічого не опублікувало»
+чи «наші припущення зламалися»? Тому ми явно викидаємо помилку:
+
+```js
+if (blocks.length === 0) {
+  throw new UpstreamError("Could not find the expected announcement markup.");
+}
+```
+
+Справжнє повідомлення в `mcp/clients.js` містить більше деталей. Ніколи не
+перетворюйте помилку розбору на впевнену відповідь, ніби список порожній.
+
+JSON-LD зручніший для машинної обробки, ніж видимий HTML, а документований і
+версіонований JSON API ще кращий. Але жоден формат не є чарівним: якщо видавець
+не гарантує контракт, структура може змінитися. MCP цього факту не змінює.
+
+Регулярні вирази тут — навмисно малі навчальні приклади, а не рекомендований
+промисловий HTML-парсер. Урок стосується нестабільного контракту, а не тези
+«HTML завжди треба розбирати регулярними виразами».
+
+---
+
+## 5. Ламаємо зовнішні джерела за допомогою git-гілок
+
+Зміна зовнішнього джерела — це нова версія сайту, а не перемикач усередині
+нашого MCP-коду. Кожна гілка `break-*` змінює лише імітаційний сайт-видавець;
+код MCP-клієнта залишається тим самим.
+
+| Гілка | Що змінив видавець | Очікуваний результат |
+|---|---|---|
+| `main` | Нічого; початкові формати | Усі чотири інструменти працюють. |
+| `break-foo-api` | `{ items: [...] }` став `{ data: [...] }`; поля перейменовано | foo падає; bar і baz працюють. |
+| `break-bar-html` | `<article class="announcement">` став `<div class="news-card">` | bar падає; foo і baz працюють. |
+| `break-baz-jsonld` | JSON-LD `ItemList` став `CollectionPage` | baz переходить до видимого HTML із попередженням. |
+| `break-all` | Усі ці зміни плюс зміна видимого HTML у baz | foo, bar і baz падають; агрегатор звітує про всі три помилки й повертає 0 елементів. |
+
+Спочатку запустіть проєкт на `main`, потім повторіть наведений вище запит `pi`
+на кожній потрібній гілці:
+
+```bash
+# Спочатку зупиніть сервери: Ctrl+C у їхньому терміналі.
+git switch break-foo-api
+bun run dev
+# Виконайте запит pi в іншому терміналі.
+
+# Подивіться, що саме змінив видавець:
+git diff main..break-foo-api
+
+# Перед поверненням зупиніть сервери.
+git switch main
+bun run dev
+```
+
+Урок кожної гілки:
+
+```text
+break-foo-api:      foo_announcements → ERROR; агрегатор позначає foo як зламане
+break-bar-html:     bar_announcements → ERROR; агрегатор позначає bar як зламане
+break-baz-jsonld:   baz_announcements → 6 через html + попередження
+break-all:          all_announcements → 0 елементів, усі 3 джерела зламані
+```
+
+Сам агрегуючий інструмент повертає структурований звіт, а не викидає помилку,
+коли падає одне джерело. Так модель може сказати, яка інтеграція не працює,
+замість стверджувати, що на всіх сайтах немає оголошень.
+
+---
+
+## 6. Тести і те, чого вони не можуть довести
 
 ```bash
 bun test
 ```
 
-All eight tests pass. That is the point and the trap. The tests prove the
-parsers match the fixtures. They do not prove the live sites still return those
-fixtures. A fixture is a photograph, not a contract.
+HTTP-тести викликають ті самі функції, які передано до `Bun.serve`. Тести
+парсерів перевіряють збережені приклади («фікстури») старого API й HTML,
+зокрема явні помилки для змінених структур.
+
+Успішні тести парсерів **не** доводять, що живий сайт досі відповідає цим
+фікстурам. Фікстура — це фотографія відповіді зовнішнього джерела, а не
+обіцянка його видавця.
+
+Демонстрація з гілками працює як маленький контрактний тест: запустіть
+справжні інструменти проти змінених серверів і подивіться, як старі
+припущення явно ламаються. На `break-foo-api` також впаде HTTP-тест foo,
+а на `break-bar-html` — HTTP-тест bar. Одночасно тести старих фікстур парсерів
+і надалі проходитимуть: саме тому одних збережених фікстур недостатньо.
 
 ---
 
-## Files
+## 7. Рекомендований порядок читання
 
 ```text
-NanoMcpDemo/
-├── shared/
-│   ├── data.js              one dataset, three delivery formats
-│   └── html.js              escape/strip helpers, no libraries
-├── foo.ch.gov.ua/index.js   JSON API
-├── bar.ch.gov.ua/index.js   SSR HTML
-├── baz.ch.gov.ua/index.js   guessed API + JSON-LD + HTML
-├── mcp/
-│   ├── index.js             Hono + createMcpHandler
-│   ├── server.js            four tools
-│   └── clients.js           fetch, parse, fallback, aggregate
-├── scripts/dev.js           all four servers on four ports
-└── test/parsers.test.js     fixtures for the parsers
+shared/data.js             один маленький набір вигаданих даних
+foo.ch.gov.ua/index.js    явна GET-маршрутизація Bun і JSON-відповіді
+bar.ch.gov.ua/index.js    явна GET-маршрутизація Bun і HTML-відповіді
+baz.ch.gov.ua/index.js    удавана API-відповідь плюс JSON-LD і HTML
+mcp/server.js             назви, описи й функції чотирьох MCP-інструментів
+mcp/clients.js            отримання, перевірка, розбір, запасні шляхи й агрегація
+mcp/index.js              передача POST /mcp офіційному MCP SDK
+scripts/dev.js            чотири виклики Bun.serve в одному процесі
+test/http.test.js         Request на вході, Response на виході — без відкриття портів
+test/parsers.test.js      старі фікстури й навмисно змінені фікстури
 ```
 
+Реєстрація MCP-інструмента в `mcp/server.js` працює за таким зразком:
+
+```js
+server.registerTool(
+  "foo_announcements",
+  { description: "Read announcements from foo", inputSchema: z.object({}) },
+  async () => {
+    const items = await fooAnnouncements();
+    // Повертаємо результат MCP-клієнту.
+  },
+);
+```
+
+Справжній файл також додає форматування результату, анотації та обробку
+помилок. Це деталі; головна ідея — «іменована JavaScript-функція, яку
+AI-клієнт може попросити виконати».
+
 ---
 
-## Exercises
+## 8. Вправи
 
-1. Add `bar_announcement_get`. Scrape `/announcements/:id` for the body.
-2. Make `foo` accept the `break-foo-api` shape and return `mode: "api-v2"`.
-   Is that better or worse than failing? Argue both sides.
-3. Add a local `snapshot.json` fallback when all sources fail. Return
-   `mode: "snapshot"` and a warning.
-4. Change a fixture to the broken markup. The test fails. Did the live site
-   fail? What does that tell you about parser tests versus contract tests?
+1. Додайте `bar_announcement_get`, який отримує `GET /announcements/:id` і
+   витягує з HTML текст оголошення.
+2. Навчіть foo приймати формат із `break-foo-api` й повертати
+   `mode: "api-v2"`. Адаптуватися краще, ніж падати? А якщо водночас існують
+   обидві версії?
+3. Додайте локальний `snapshot.json` як запасний варіант, коли всі джерела
+   падають. Чітко позначте дані як застарілі й додайте попередження. Чим це
+   відрізняється від живих даних?
+4. Змініть лише фікстуру в `test/parsers.test.js`. Чи змінився від цього живий
+   імітаційний сайт? Що це говорить про тести парсера й контрактні тести?
+5. Знайдіть усі `request.method` і виклики `Bun.serve`. Простежте в коді один
+   браузерний GET-запит і один MCP POST-запит.
 
 ---
 
-## The one sentence
+## Головне одним реченням
 
-**The MCP server is easy. The data contracts are hard, and nobody signed them.**
+**MCP стандардизує виклик ваших інструментів AI-клієнтом, але не може
+стандартизувати чужий сайт, тому перевіряйте відповіді й чесно повідомляйте
+про зламані припущення.**

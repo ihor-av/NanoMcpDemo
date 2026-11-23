@@ -1,36 +1,61 @@
 /**
- * bar.ch.gov.ua — a department with a server-rendered site and no API.
+ * bar.ch.gov.ua — департамент із серверною HTML-версткою без API.
  *
- * GET /announcements     → HTML list
- * GET /announcements/:id → HTML detail
+ * GET /announcements     → HTML-список
+ * GET /announcements/:id → HTML-сторінка оголошення
  *
- * The list uses <article class="announcement">. That class name is the
- * contract the scraper depends on, and it is not a real contract.
+ * Список використовує <article class="announcement">. Назва цього класу —
+ * контракт, на який спирається скрапер, і це не справжній контракт.
  */
-import { Hono } from "hono";
 import { ANNOUNCEMENTS } from "../shared/data.js";
 import { escapeHtml, page } from "../shared/html.js";
 
-export const app = new Hono();
+export function handleBarRequest(request) {
+  const pathname = new URL(request.url).pathname;
 
-app.get("/", (c) =>
-  c.text(
-    [
-      "bar.ch.gov.ua — mock SSR site",
-      "",
-      "GET /announcements",
-      "GET /announcements/1",
-    ].join("\n"),
-  ),
-);
+  if (request.method === "GET" && pathname === "/") {
+    return new Response(
+      [
+        "bar.ch.gov.ua — mock server-rendered site",
+        "",
+        "GET /announcements",
+        "GET /announcements/1",
+      ].join("\n"),
+    );
+  }
 
-app.get("/announcements", (c) => c.html(listPage()));
+  if (request.method === "GET" && pathname === "/announcements") {
+    return new Response(listPage(), {
+      headers: { "content-type": "text/html; charset=utf-8" },
+    });
+  }
 
-app.get("/announcements/:id", (c) => {
-  const item = ANNOUNCEMENTS.find((announcement) => announcement.id === c.req.param("id"));
-  if (!item) return c.html(page("Не знайдено", "<h1>404</h1>"), 404);
-  return c.html(detailPage(item));
-});
+  const announcementMatch = pathname.match(/^\/announcements\/([^/]+)$/);
+  if (request.method === "GET" && announcementMatch) {
+    const announcementId = announcementMatch[1];
+    const item = ANNOUNCEMENTS.find((announcement) => announcement.id === announcementId);
+
+    if (!item) {
+      return new Response(page("Не знайдено", "<h1>404</h1>"), {
+        status: 404,
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    }
+
+    return new Response(detailPage(item), {
+      headers: { "content-type": "text/html; charset=utf-8" },
+    });
+  }
+
+  if (request.method !== "GET") {
+    return new Response("This site only accepts GET requests.\n", {
+      status: 405,
+      headers: { allow: "GET" },
+    });
+  }
+
+  return new Response("Not found.\n", { status: 404 });
+}
 
 function listPage() {
   const items = ANNOUNCEMENTS.map(
@@ -64,6 +89,9 @@ function detailPage(item) {
 }
 
 if (import.meta.main) {
-  Bun.serve({ port: 4102, fetch: app.fetch });
+  Bun.serve({
+    port: 4102,
+    fetch: handleBarRequest,
+  });
   console.log("bar.ch.gov.ua → http://127.0.0.1:4102");
 }

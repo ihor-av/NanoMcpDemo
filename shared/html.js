@@ -1,10 +1,10 @@
 /**
- * Tiny HTML helpers. No libraries.
+ * Крихітні HTML-хелпери. Без бібліотек.
  *
- * The mock sites escape what they render.
- * The scraper strips tags and decodes the five entities it is likely to meet.
- * That is enough for a demo, and it is exactly the kind of code an agent writes
- * when it cannot add a DOM parser.
+ * Мок-сайти екранують те, що рендерять.
+ * Скрапер видаляє теги й декодує п'ять сутностей, які найімовірніше зустріне.
+ * Для демо цього достатньо, і це саме той код, який пише агент,
+ * коли не може додати DOM-парсер.
  */
 
 export function escapeHtml(value) {

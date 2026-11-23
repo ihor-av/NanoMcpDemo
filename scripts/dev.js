@@ -1,28 +1,30 @@
 /**
- * Start all four servers in one Bun process.
+ * Запустити всі чотири сервери в одному процесі Bun.
  *
- * Run: bun run dev
- * Stop: Ctrl+C
+ * Запуск: bun run dev
+ * Зупинка: Ctrl+C
  */
-import { app as foo } from "../foo.ch.gov.ua/index.js";
-import { app as bar } from "../bar.ch.gov.ua/index.js";
-import { app as baz } from "../baz.ch.gov.ua/index.js";
-import { app as mcp } from "../mcp/index.js";
+import { handleFooRequest } from "../foo.ch.gov.ua/index.js";
+import { handleBarRequest } from "../bar.ch.gov.ua/index.js";
+import { handleBazRequest } from "../baz.ch.gov.ua/index.js";
+import { handleMcpRequest } from "../mcp/index.js";
 
+// Bun.serve calls the matching function whenever an HTTP request arrives.
+// Each function receives a standard Request and returns a standard Response.
 const servers = [
-  Bun.serve({ port: 4101, fetch: foo.fetch }),
-  Bun.serve({ port: 4102, fetch: bar.fetch }),
-  Bun.serve({ port: 4103, fetch: baz.fetch }),
-  Bun.serve({ port: 8787, fetch: mcp.fetch }),
+  Bun.serve({ port: 4101, fetch: handleFooRequest }),
+  Bun.serve({ port: 4102, fetch: handleBarRequest }),
+  Bun.serve({ port: 4103, fetch: handleBazRequest }),
+  Bun.serve({ port: 8787, fetch: handleMcpRequest }),
 ];
 
 console.log(`
 NanoMCP demo:
 
-  foo.ch.gov.ua   http://127.0.0.1:4101   JSON API
-  bar.ch.gov.ua   http://127.0.0.1:4102   SSR HTML
-  baz.ch.gov.ua   http://127.0.0.1:4103   guessed API + JSON-LD + HTML
-  MCP             http://127.0.0.1:8787/mcp
+  foo.ch.gov.ua   http://127.0.0.1:4101   JSON API (GET)
+  bar.ch.gov.ua   http://127.0.0.1:4102   HTML pages (GET)
+  baz.ch.gov.ua   http://127.0.0.1:4103   HTML + JSON-LD (GET)
+  MCP             http://127.0.0.1:8787/mcp   MCP messages (POST)
 
 Ctrl+C stops all four.
 `);

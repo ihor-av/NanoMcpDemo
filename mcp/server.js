@@ -1,11 +1,11 @@
 /**
- * The MCP surface. Four read-only tools.
+ * Поверхня MCP. Чотири інструменти лише для читання.
  *
- * Each one is a different bet on somebody else's output:
- *   foo — a JSON API that can change shape
- *   bar — an SSR page that can change markup
- *   baz — a guessed API, then JSON-LD, then HTML
- *   all — all three, with per-source failure reports
+ * Кожен — це різний ризик щодо чужого виводу:
+ *   foo — JSON API, форма якого може змінитися
+ *   bar — серверна сторінка, розмітка якої може змінитися
+ *   baz — вигаданий API, потім JSON-LD, потім HTML
+ *   all — усі три джерела зі звітом про помилки кожного
  */
 import { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
@@ -64,7 +64,7 @@ export function buildServer() {
   server.registerTool(
     "bar_announcements",
     {
-      title: "bar.ch.gov.ua announcements (SSR HTML)",
+      title: "bar.ch.gov.ua announcements (HTML page)",
       description:
         'Scrapes the mock press-service page. It assumes <article class="announcement">. ' +
         "If the markup changes, this tool returns an explicit parse error instead of pretending there are no announcements.",

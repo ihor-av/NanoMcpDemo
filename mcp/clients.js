@@ -1,13 +1,13 @@
 /**
- * The four access paths, in one file.
+ * Чотири шляхи доступу в одному файлі.
  *
  * foo: JSON API.
- * bar: SSR HTML.
- * baz: guessed API, then JSON-LD, then HTML.
- * all: all three, with per-source failure reports.
+ * bar: серверний HTML.
+ * baz: вигаданий API, потім JSON-LD, потім HTML.
+ * all: усі три джерела зі звітом про помилки кожного.
  *
- * Each parser checks what it got. A parser cannot enforce an upstream contract;
- * it can only fail honestly when the contract moves.
+ * Кожен парсер перевіряє, що саме він отримав. Парсер не може гарантувати
+ * контракт зовнішнього джерела; він може лише чесно зламатися, коли той зміниться.
  */
 import { stripTags } from "../shared/html.js";
 
@@ -36,7 +36,7 @@ async function fetchJson(url) {
 
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {
-    // The classic guessed-API failure: HTTP 200, text/html.
+    // Класична невдача вигаданого API: HTTP 200, text/html.
     throw new UpstreamError(
       `${url} returned ${contentType || "an unknown content type"}, not JSON. ` +
         `An HTTP 200 does not mean the endpoint is an API.`,
@@ -89,7 +89,7 @@ export function parseFoo(data) {
   });
 }
 
-// --- bar: SSR HTML ---------------------------------------------------------
+// --- bar: серверний HTML ---------------------------------------------------
 
 export async function barAnnouncements() {
   const html = await fetchText(`${BAR_URL}/announcements`);
@@ -129,12 +129,12 @@ export function parseBar(html, baseUrl) {
   });
 }
 
-// --- baz: guessed API → JSON-LD → HTML ------------------------------------
+// --- baz: вигаданий API → JSON-LD → HTML ----------------------------------
 
 export async function bazAnnouncements() {
   const warnings = [];
 
-  // 1. The API the agent guessed.
+  // 1. API, який вигадав агент.
   try {
     const data = await fetchJson(`${BAZ_URL}/api/announcements`);
     return { items: parseBazApi(data), mode: "api" };
@@ -144,7 +144,7 @@ export async function bazAnnouncements() {
 
   const html = await fetchText(`${BAZ_URL}/announcements`);
 
-  // 2. JSON-LD embedded in the page.
+  // 2. JSON-LD, вбудований у сторінку.
   try {
     return {
       items: parseBazJsonLd(html),
@@ -155,7 +155,7 @@ export async function bazAnnouncements() {
     warnings.push(`JSON-LD: ${errorMessage(error)}`);
   }
 
-  // 3. Visible HTML.
+  // 3. Видимий HTML.
   try {
     return {
       items: parseBazHtml(html, BAZ_URL),
@@ -264,7 +264,7 @@ export function parseBazHtml(html, baseUrl) {
   });
 }
 
-// --- all: partial failure is normal ---------------------------------------
+// --- all: часткова помилка — це нормально ----------------------------------
 
 export async function allAnnouncements() {
   const [foo, bar, baz] = await Promise.allSettled([

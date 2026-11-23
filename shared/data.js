@@ -1,12 +1,12 @@
 /**
- * One dataset, three delivery formats.
+ * Один набір даних, три формати доставки.
  *
- * foo serves it as JSON.
- * bar renders it as server-side HTML.
- * baz embeds it as JSON-LD inside HTML.
+ * foo віддає його як JSON.
+ * bar рендерить як серверний HTML.
+ * baz вбудовує його як JSON-LD у HTML.
  *
- * The content is fictional. The street addresses are real Chernivtsi addresses,
- * because that is what the real project deals with.
+ * Зміст вигаданий. Вулиці — справжні чернівецькі адреси,
+ * бо саме з цим працює реальний проєкт.
  *
  * @typedef {Object} Announcement
  * @property {string} id
